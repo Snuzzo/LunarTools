@@ -71,7 +71,7 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
-					dd if=$file_chosen of=/dev/block/$boot  >& /dev/null
+					dd if=$file_chosen of=/dev/block/$boot
 					echo "Please Reboot to recovery....."
 					echo ".... and Wipe Dalvik Cache & Cache"
 					echo "GoodBye!"
@@ -145,7 +145,7 @@ read menu
 						"1")
 							echo "Input name of recovery backup [Aa-Zz|0-9]:"
 							read recoverybackup
-							dd if=/dev/block/$recovery of=/sdcard/lunar/recovery_$recoverybackup_$DATE.img  >& /dev/null
+							dd if=/dev/block/$recovery of=/sdcard/lunar/recovery_$recoverybackup_$DATE.img
 							echo "Your current recovery was saved to SDCard/Lunar dir as recovery_$recoverybackup_$DATE.img"
 							;;
 						"2")
@@ -164,7 +164,7 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
-					dd if=$file_chosen of=/dev/block/$recovery  >& /dev/null
+					dd if=$file_chosen of=/dev/block/$recovery
 					echo "Please Reboot to recovery....."
 					echo ".... and Wipe Dalvik Cache & Cache"
 					echo "GoodBye!"
@@ -246,7 +246,7 @@ read menu
 					#-- Checking if temp exists if not we will create it
 					mkdir /sdcard/temp
 					fi
-					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img >& /dev/null
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
 					abootimg -x /sdcard/temp/tempboot.img
 					sum2=$(sha1sum zImage | cut -d ' ' -f 1)
 					cp /sdcard/temp/tempboot.img /sdcard/lunar/boot_last_known_good.img
@@ -255,8 +255,8 @@ read menu
 					cd /sdcard/lunar
 					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen
 					cd /sdcard/temp
-					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot  >& /dev/null
-					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img  >& /dev/null
+					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
 					abootimg -x /sdcard/temp/tempboot.img
 					sum3=$(sha1sum zImage | cut -d ' ' -f 1)
 					echo "$file_chosen sha1sum is $sum1"
@@ -270,7 +270,7 @@ read menu
 					if [ "$sum3" == "$sum2" ]; then
 					echo "flash unsuccessful"
 					echo "restoring boot_last_known_good.img"
-					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot  >& /dev/null
+					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot
 					fi
 					rm zImage
 					rm initrd.img
