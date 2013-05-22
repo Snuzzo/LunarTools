@@ -7,10 +7,10 @@ recovery=$(grep -i "recovery" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/'
 #Let's not rely on static values, we will get them from emmc hardware instead
 
 DATE=$(date +"%m%d%y")
-if [ ! -d "/sdcard2/lunar" ]; then
-mkdir /sdcard2/lunar
+if [ ! -d "/sdcard/lunar" ]; then
+mkdir /sdcard/lunar
 fi
-cd /sdcard2/lunar
+cd /sdcard/lunar
 echo
 echo "1) Flash a previously saved boot.img"
 echo "2) Flash a recovery.img"
@@ -145,7 +145,7 @@ read menu
 						"1")
 							echo "Input name of recovery backup [Aa-Zz|0-9]:"
 							read recoverybackup
-							dd if=/dev/block/$recovery of=/sdcard2/lunar/recovery_$recoverybackup_$DATE.img  >& /dev/null
+							dd if=/dev/block/$recovery of=/sdcard/lunar/recovery_$recoverybackup_$DATE.img  >& /dev/null
 							echo "Your current recovery was saved to SDCard/Lunar dir as recovery_$recoverybackup_$DATE.img"
 							;;
 						"2")
@@ -242,22 +242,22 @@ read menu
 					echo "1"
 					sleep 1
 					sum1=$(sha1sum $file_chosen | cut -d ' ' -f 1)
-					if [ ! -d "/sdcard2/temp" ]; then
+					if [ ! -d "/sdcard/temp" ]; then
 					#-- Checking if temp exists if not we will create it
-					mkdir /sdcard2/temp
+					mkdir /sdcard/temp
 					fi
-					dd if=/dev/block/$boot of=/sdcard2/temp/tempboot.img >& /dev/null
-					abootimg -x /sdcard2/temp/tempboot.img
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img >& /dev/null
+					abootimg -x /sdcard/temp/tempboot.img
 					sum2=$(sha1sum zImage | cut -d ' ' -f 1)
-					cp /sdcard2/temp/tempboot.img /sdcard2/lunar/boot_last_known_good.img
+					cp /sdcard/temp/tempboot.img /sdcard/lunar/boot_last_known_good.img
 					echo "Pulled a copy of your current boot.img to lunar/boot_last_known_good.img"
 					#-- The next line is dependent on the placement of abootimg
-					cd /sdcard2/lunar
-					abootimg -u /sdcard2/temp/tempboot.img -k $file_chosen
-					cd /sdcard2/temp
-					dd if=/sdcard2/temp/tempboot.img of=/dev/block/$boot  >& /dev/null
-					dd if=/dev/block/$boot of=/sdcard2/temp/tempboot.img  >& /dev/null
-					abootimg -x /sdcard2/temp/tempboot.img
+					cd /sdcard/lunar
+					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen
+					cd /sdcard/temp
+					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot  >& /dev/null
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img  >& /dev/null
+					abootimg -x /sdcard/temp/tempboot.img
 					sum3=$(sha1sum zImage | cut -d ' ' -f 1)
 					echo "$file_chosen sha1sum is $sum1"
 					echo "Current zImage sha1sum is $sum2"
@@ -265,12 +265,12 @@ read menu
 					echo "flashed ok"
 					currentboot=$(echo $file_chosen | sed -e "s|zimage|boot_currentrom_|")
 					echo "Copy of your updated boot.img is at lunar/$currentboot.img"
-					mv /sdcard2/temp/tempboot.img /sdcard2/lunar/$currentboot.img
+					mv /sdcard/temp/tempboot.img /sdcard/lunar/$currentboot.img
 					fi
 					if [ "$sum3" == "$sum2" ]; then
 					echo "flash unsuccessful"
 					echo "restoring boot_last_known_good.img"
-					dd if=/sdcard2/lunar/boot_last_known_good.img of=/dev/block/$boot  >& /dev/null
+					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot  >& /dev/null
 					fi
 					rm zImage
 					rm initrd.img
