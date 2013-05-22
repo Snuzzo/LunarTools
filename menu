@@ -12,9 +12,10 @@ mkdir /sdcard/lunar
 fi
 cd /sdcard/lunar
 echo
-echo "1) Flash a previously saved boot.img"
+echo "1) Flash a previously saved boot.img from cmdline script"
 echo "2) Flash a recovery.img"
-echo "3) Flash an AnyKernel zImage"
+echo "3) Update current kernel with an AnyKernel zImage"
+echo "4) Flash boot.img from zip and auto-reboot to recovery"
 echo
 echo "Choose number selection[99 = abort]:"
 read menu
@@ -71,11 +72,12 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
-					dd if=$file_chosen of=/dev/block/$boot
-					echo "Please Reboot to recovery....."
-					echo ".... and Wipe Dalvik Cache & Cache"
+					dd if=$file_chosen of=/dev/block/$boot 2> /dev/null
+					rm -rf /data/dalvik-cache/*
+					echo '--wipe_cache' >> /cache/recovery/command
+					echo "Rebooting to recovery.....to wipe Dalvik Cache & Cache"
 					echo "GoodBye!"
-					exit
+					reboot recovery
 					;;
 				"2")
 					echo "Fine, I will be here when you get back :)"
@@ -165,8 +167,7 @@ read menu
 					echo "1"
 					sleep 1
 					dd if=$file_chosen of=/dev/block/$recovery 2> /dev/null
-					echo "Please Reboot to recovery....."
-					echo ".... and Wipe Dalvik Cache & Cache"
+					echo "Done flashing....."
 					echo "GoodBye!"
 					exit
 					;;
@@ -247,17 +248,17 @@ read menu
 					mkdir /sdcard/temp
 					fi
 					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img 2> /dev/null
-					abootimg -x /sdcard/temp/tempboot.img
+					abootimg -x /sdcard/temp/tempboot.img > /dev/null
 					sum2=$(sha1sum zImage | cut -d ' ' -f 1)
 					cp /sdcard/temp/tempboot.img /sdcard/lunar/boot_last_known_good.img
 					echo "Pulled a copy of your current boot.img to lunar/boot_last_known_good.img"
 					#-- The next line is dependent on the placement of abootimg
 					cd /sdcard/lunar
-					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen
+					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen > /dev/null
 					cd /sdcard/temp
 					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot 2> /dev/null
 					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img 2> /dev/null
-					abootimg -x /sdcard/temp/tempboot.img
+					abootimg -x /sdcard/temp/tempboot.img > /dev/null
 					sum3=$(sha1sum zImage | cut -d ' ' -f 1)
 					echo "$file_chosen sha1sum is $sum1"
 					echo "Current zImage sha1sum is $sum2"
@@ -266,8 +267,7 @@ read menu
 					currentboot=$(echo $file_chosen | sed -e "s|zimage|boot_currentrom_|")
 					echo "Copy of your updated boot.img is at lunar/$currentboot.img"
 					mv /sdcard/temp/tempboot.img /sdcard/lunar/$currentboot.img
-					fi
-					if [ "$sum3" == "$sum2" ]; then
+					else
 					echo "flash unsuccessful"
 					echo "restoring boot_last_known_good.img"
 					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot 2> /dev/null
@@ -275,10 +275,90 @@ read menu
 					rm zImage
 					rm initrd.img
 					rm bootimg.cfg
-					echo "Please Reboot to recovery....."
-					echo ".... and Wipe Dalvik Cache & Cache"
+					rm -rf /data/dalvik-cache/*
+					echo '--wipe_cache' >> /cache/recovery/command
+					echo "Rebooting to recovery.....to wipe Dalvik Cache & Cache"
 					echo "GoodBye!"
+					reboot recovery
+					;;
+				"2")
+					echo "Fine, I will be here when you get back :)"
+					echo "This message will self-destruct in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo "P O O F!"
 					exit
+					;;
+			esac
+		$confirm
+		;;
+		"4")
+			grep_cmd=`find *.zip`
+			echo "Previous configurations:" 
+			echo
+			for filename in $grep_cmd 
+			    do
+ 			     count=$(($count+1))
+
+ 			     filename=`echo $filename | sed 's/temp_space/ /g'`
+
+   			   # Store file names in an array
+     			 file_array[$count]=$filename
+
+			      echo "  ($count) $filename" >> temp.list
+  			  done
+
+  			  more temp.list
+ 			  rm temp.list
+
+			    echo
+			    echo -n "Enter selection number to flash (exit = 0): "
+
+    			read enterNumber
+    			echo
+			if [ "$enterNumber" == "0" ]
+    			then
+      			exit 0
+			fi
+			if [ "`echo $enterNumber | sed 's/[0-9]*//'`" == "" ] || [ "enterNumber"=="1" ]
+    			then
+      			file_chosen=${file_array[$enterNumber]}
+			fi
+			echo "Last chance before we flash" 
+			echo "You chose $file_chosen"
+			echo 
+			echo "1) Yes; I am ready flash it right away"
+			echo "2) No; let's just save it for later"
+			echo "Confirm flash?"
+			read confirm
+			case "$confirm" in
+				"1")
+					echo "Flashing selection in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					unzip $file_chosen boot.img -d /sdcard/lunar/
+					dd if=/sdcard/lunar/boot.img of=/dev/block/$boot 2> /dev/null
+					rm boot.img
+					echo "Rebooting to recovery....."
+					echo "... and finish flashing $file_chosen"
+					echo "GoodBye!"
+					reboot recovery
 					;;
 				"2")
 					echo "Fine, I will be here when you get back :)"
