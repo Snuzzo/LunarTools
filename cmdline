@@ -7,39 +7,29 @@ recovery=$(grep -i "recovery" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/'
 hardware=$(cat /proc/cmdline | sed "s/.*hardware=//" | cut -d" " -f1)
 #Let's not rely on static values, we will get them from emmc hardware instead
 clear
-echo "Max CPU Clock selection:" 
-echo
-echo "1) 1.67ghz"
-echo "2) 1.62ghz"
-echo "3) 1.56ghz"
-echo "4) 1.51ghz"
-echo "Choose number selection[99 = abort][0 = default:1.67ghz]:"
-read maxkhz
-        case "$maxkhz" in
-                "0")
-                        maxkhz=1674000
-                        maxkhz2="1.67ghz"
-                        ;;
-                "1")
-                        maxkhz=1674000
-                        maxkhz2="1.67ghz"
-                        ;;
-                "2")
-                        maxkhz=1620000
-                        maxkhz2="1.62ghz"
-                        ;;
-                "3")
-                        maxkhz=1566000
-                        maxkhz2="1.56ghz"
-                        ;;
-                "4")
-                        maxkhz=1512000
-                        maxkhz2="1.51ghz"
-                        ;;
-                "99")
-			exit
-                        ;;
-        esac
+echo "Max CPU Clock selection:"
+echo 
+frequencies=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' | tail -n 5)
+# Load text file lines into a bash array.
+OLD_IFS=$IFS
+IFS=$'\n'
+let line_counter=0
+for line in $frequencies; do
+	let line_counter=$(($line_counter+1))
+	printf "${line_counter}) ${line}\n"
+done
+IFS=$OLD_IFS
+echo "Enter a selection [exit = 99]:"
+read input
+if [ "$input" == "99" ];then
+exit
+fi
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed '$d' | tail -n 5 > /sdcard/temp1
+cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
+cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
+grep $input"=" /sdcard/temp1 > /sdcard/temp2
+sed -i -e 's/'$input'=//' /sdcard/temp2
+maxkhz=$(cat /sdcard/temp2)
 clear
 echo "Min CPU Clock selection:" 
 echo
