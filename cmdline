@@ -203,12 +203,10 @@ read confirm
 			fi
 			cd temp
 			dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
-			#-- The next line is dependent on the placement of abootimg
-			/sbin/abootimg -x /sdcard/temp/tempboot.img
+			abootimg -x /sdcard/temp/tempboot.img
 			sed -i '/cmdline = / d' bootimg.cfg
 			echo "cmdline = console=ttyHSL3 androidboot.hardware="$hardware" no_console_suspend=1 gov="$gov "maxkhz="$maxkhz "minkhz="$minkhz "scheduler="$scheduler "maxscroff="$maxscroff "s2w="$s2w"" >> bootimg.cfg
-			#-- The next line is dependent on the placement of abootimg
-			/sbin/abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
+			abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
 			dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot
 			rm bootimg.cfg
 			rm initrd.img
@@ -233,12 +231,10 @@ read confirm
 			fi
 			cd temp
 			dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
-			#-- The next line is dependent on the placement of abootimg
-			/sbin/abootimg -x /sdcard/temp/tempboot.img
+			abootimg -x /sdcard/temp/tempboot.img
 			sed -i '/cmdline = / d' bootimg.cfg
 			echo "cmdline = console=ttyHSL3 androidboot.hardware="$hardware" no_console_suspend=1 gov="$gov "maxkhz="$maxkhz "minkhz="$minkhz "scheduler="$scheduler "maxscroff="$maxscroff "s2w="$s2w"" >> bootimg.cfg
-			#-- The next line is dependent on the placement of abootimg
-			/sbin/abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
+			abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
 			rm bootimg.cfg
 			rm initrd.img
 			rm zImage
