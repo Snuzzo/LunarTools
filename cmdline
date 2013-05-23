@@ -31,39 +31,29 @@ grep $input"=" /sdcard/temp1 > /sdcard/temp2
 sed -i -e 's/'$input'=//' /sdcard/temp2
 maxkhz=$(cat /sdcard/temp2)
 clear
-echo "Min CPU Clock selection:" 
-echo
-echo "1) 486mhz"
-echo "2) 432mhz"
-echo "3) 384mhz"
-echo "4) 192mhz"
-echo "Choose number selection[99 = abort][0 = default:384mhz]:"
-read minkhz
-        case "$minkhz" in
-                "0")
-                        minkhz=384000
-                        minkhz2="384mhz"
-                        ;;
-                "1")
-                        minkhz=486000
-                        minkhz2="486mhz"
-                        ;;
-                "2")
-                        minkhz=432000
-                        minkhz2="432mhz"
-                        ;;
-                "3")
-                        minkhz=384000
-                        minkhz2="384mhz"
-                        ;;
-                "4")
-                        minkhz=192000
-                        minkhz2="192mhz"
-                        ;;
-                "99")
-			exit
-                        ;;
-        esac
+echo "Min CPU Clock selection:"
+echo 
+frequencies=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' | head -n 4)
+# Load text file lines into a bash array.
+OLD_IFS=$IFS
+IFS=$'\n'
+let line_counter=0
+for line in $frequencies; do
+	let line_counter=$(($line_counter+1))
+	printf "${line_counter}) ${line}\n"
+done
+IFS=$OLD_IFS
+echo "Enter a selection [exit = 99]:"
+read input
+if [ "$input" == "99" ];then
+exit
+fi
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed '$d' | head -n 4 > /sdcard/temp1
+cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
+cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
+grep $input"=" /sdcard/temp1 > /sdcard/temp2
+sed -i -e 's/'$input'=//' /sdcard/temp2
+minkhz=$(cat /sdcard/temp2)
 clear
 echo "Max Screen Off CPU Clock selection:" 
 echo
