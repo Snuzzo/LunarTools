@@ -183,8 +183,11 @@ echo "Invalid selection: Aborting script"
 exit
 fi
 clear
+maxkhz2=$(echo $maxkhz | sed '$s/000/mhz/')
+minkhz2=$(echo $minkhz | sed '$s/000/mhz/')
+maxscroff2=$(echo $maxscroff | sed '$s/000/mhz/')
 echo "Last chance before we flash" 
-echo "Options chosen are $maxkhz2 $minkhz2 $maxscroff2 $gov2 $scheduler S2w $s2w2"
+echo "Options chosen are $maxkhz2 $minkhz2 $maxscroff2 $gov $scheduler S2w $s2w2"
 echo 
 echo "1) Yes; I am ready flash it right away"
 echo "2) No; let's just save it for later"
@@ -213,10 +216,10 @@ read confirm
 			if [ ! -d "/sdcard/lunar" ]; then
 			mkdir /sdcard/lunar
 			fi
-			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img ]; then
-			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img
+			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img ]; then
+			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img
 			echo "Flashed new boot and created at"
-			echo "/sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img"
+			echo "/sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img"
 			else
 			echo "Configuration already exists; aborting copy to /sdcard/lunar"
 			rm tempboot.img
@@ -242,10 +245,10 @@ read confirm
 			if [ ! -d "/sdcard/lunar" ]; then
 			mkdir /sdcard/lunar
 			fi
-			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img ]; then
-			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img
+			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img ]; then
+			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img
 			echo "I just saved your boot LOL"
-			echo "It is saved here /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img"
+			echo "It is saved here /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img"
 			echo "Run 'sh /sbin/menu.sh' to flash"
 			else
 			echo "Configuration already exists; aborting copy to /sdcard/lunar"
