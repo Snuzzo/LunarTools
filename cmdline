@@ -56,43 +56,28 @@ sed -i -e 's/'$input'=//' /sdcard/temp2
 minkhz=$(cat /sdcard/temp2)
 clear
 echo "Max Screen Off CPU Clock selection:" 
-echo
-echo "1) 702mhz"
-echo "2) 648mhz"
-echo "3) 594mhz"
-echo "4) 540mhz"
-echo "5) 486mhz"
-echo "Choose number selection[99 = abort][0 = default:486mhz:"
-read maxscroff
-        case "$maxscroff" in
-                "0")
-                        maxscroff=486000
-                        maxscroff2="486mhz"
-                        ;;
-                "1")
-                        maxscroff=702000
-                        maxscroff2="702mhz"
-                        ;;
-                "2")
-                        maxscroff=648000
-                        maxscroff2="648mhz"
-                        ;;
-                "3")
-                        maxscroff=594000
-                        maxscroff2="594mhz"
-                        ;;
-                "4")
-                        maxscroff=540000
-                        maxscroff2="540mhz"
-                        ;;
-                "5")
-                        maxscroff=486000
-                        maxscroff2="486mhz"
-                        ;;
-                "99")
-			exit
-                        ;;
-        esac
+echo 
+frequencies=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' | tail -n+5 | head -n 8)
+# Load text file lines into a bash array.
+OLD_IFS=$IFS
+IFS=$'\n'
+let line_counter=0
+for line in $frequencies; do
+	let line_counter=$(($line_counter+1))
+	printf "${line_counter}) ${line}\n"
+done
+IFS=$OLD_IFS
+echo "Enter a selection [exit = 99]:"
+read input
+if [ "$input" == "99" ];then
+exit
+fi
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed '$d' | tail -n+5 | head -n 8 > /sdcard/temp1
+cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
+cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
+grep $input"=" /sdcard/temp1 > /sdcard/temp2
+sed -i -e 's/'$input'=//' /sdcard/temp2
+maxscroff=$(cat /sdcard/temp2)
 clear
 echo "Governor selection:"
 echo
