@@ -115,63 +115,31 @@ read maxscroff
         esac
 clear
 echo "Governor selection:"
-echo 
-echo "1) Intellidemand"
-echo "2) Lionheart"
-echo "3) Wheatley"
-echo "4) Lulzactive"
-echo "5) DanceDance"
-echo "6) Scary"
-echo "7) BadAss"
-echo "8) Lazy"
-echo "9) Lagfree"
-echo "Choose number selection[99 = abort][0 = default:Intellidemand]:"
-read gov
-	case "$gov" in
-                "0")
-                        gov=intellidemand
-                        gov2="Intellidemand"
-                        ;;
-                "1")
-                        gov=intellidemand
-                        gov2="Intellidemand"
-                        ;;
-                "2")
-                        gov=Lionheart
-                        gov2="LionHeart"
-                        ;;
-                "3")
-                        gov=wheatley
-                        gov2="Wheatley"
-                        ;;
-                "4")
-                        gov=lulzactive
-                        gov2="Lulzactive"
-                        ;;
-                "5")
-                        gov=dancedance
-                        gov2="DanceDance"
-                        ;;
-                "6")
-                        gov=scary
-                        gov2="Scary"
-                        ;;
-                "7")
-                        gov=badass
-                        gov2="BadAss"
-                        ;;
-                "8")
-                        gov=lazy
-                        gov2="Lazy"
-                        ;;
-                "9")
-                        gov=lagfree
-                        gov2="Lagfree"
-                        ;;
-                "99")
-			exit
-                        ;;
-	esac
+echo
+governors=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors | sed -e 's/\s\s*/\n/g' | sed 's/ //g')
+# Load text file lines into a bash array & print as a menu.
+OLD_IFS=$IFS
+IFS=$'\n'
+let line_counter=0
+for line in $governors; do
+	let line_counter=$(($line_counter+1))
+	printf "${line_counter}) ${line}\n"
+done
+IFS=$OLD_IFS
+echo "Enter a selection [exit = 99]:"
+read input
+if [ "$input" == "99" ];then
+exit
+fi
+# Build the array as a readable file for parsing
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors > /sdcard/temp1
+cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
+cat /sdcard/temp2 | sed '$d' > /sdcard/temp1
+cat -n /sdcard/temp1 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp2
+grep $input"=" /sdcard/temp2 > /sdcard/temp1
+sed -i -e 's/'$input'=//' /sdcard/temp1
+# Chosen governor is now parsed let's make it usable
+gov=$(cat /sdcard/temp1)
 clear
 echo "IO Scheduler selection:"
 echo 
