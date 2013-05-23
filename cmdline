@@ -108,32 +108,27 @@ gov=$(cat /sdcard/temp1)
 clear
 echo "IO Scheduler selection:"
 echo 
-echo "1) SIO"
-echo "2) No-op"
-echo "3) Deadline"
-echo "4) Row"
-echo "Choose number selection[99 = abort][0 = default:SIO]:"
-read scheduler
-	case "$scheduler" in
-                "0")
-                        scheduler=sio
-                        ;;
-                "1")
-                        scheduler=sio
-                        ;;
-                "2")
-                        scheduler=noop
-                        ;;
-                "3")
-                        scheduler=deadline
-                        ;;
-                "4")
-                        scheduler=row
-                        ;;
-                "99")
-			exit
-                        ;;
-	esac
+schedulers=$(cat /sys/block/mmcblk0/queue/scheduler | sed 's/[[]//g' | sed 's/[]]//g' | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g')
+# Load text file lines into a bash array.
+OLD_IFS=$IFS
+IFS=$'\n'
+let line_counter=0
+for line in $schedulers; do
+	let line_counter=$(($line_counter+1))
+	printf "${line_counter}) ${line}\n"
+done
+IFS=$OLD_IFS
+echo "Enter a selection [exit = 99]:"
+read input
+if [ "$input" == "99" ];then
+exit
+fi
+cat /sys/block/mmcblk0/queue/scheduler | sed 's/[[]//g' | sed 's/[]]//g' | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' > /sdcard/temp1
+cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
+cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
+grep $input"=" /sdcard/temp1 > /sdcard/temp2
+sed -i -e 's/'$input'=//' /sdcard/temp2
+scheduler=$(cat /sdcard/temp2)
 clear
 echo "Sweep2Wake selection:"
 echo 
