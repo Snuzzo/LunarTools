@@ -7,148 +7,200 @@ recovery=$(grep -i "recovery" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/'
 hardware=$(cat /proc/cmdline | sed "s/.*hardware=//" | cut -d" " -f1)
 #Let's not rely on static values, we will get them from emmc hardware instead
 clear
-echo "Max CPU Clock selection:"
-echo 
-frequencies=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' | tail -n 5)
-# Load text file lines into a bash array.
-OLD_IFS=$IFS
-IFS=$'\n'
-let line_counter=0
-for line in $frequencies; do
-	let line_counter=$(($line_counter+1))
-	printf "${line_counter}) ${line}\n"
-done
-IFS=$OLD_IFS
-echo "Enter a selection [exit = 99]:"
-read input
-if [ "$input" == "99" ];then
-exit
-fi
-if [ "$input" -gt "$line_counter" ];then
-echo "Invalid selection: Aborting script"
-exit
-fi
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed '$d' | tail -n 5 > /sdcard/temp1
-cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
-cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
-grep $input"=" /sdcard/temp1 > /sdcard/temp2
-sed -i -e 's/'$input'=//' /sdcard/temp2
-maxkhz=$(cat /sdcard/temp2)
+echo "Max CPU Clock selection:" 
+echo
+echo "1) 1.67ghz"
+echo "2) 1.62ghz"
+echo "3) 1.56ghz"
+echo "4) 1.51ghz"
+echo "Choose number selection[99 = abort][0 = default:1.67ghz]:"
+read maxkhz
+        case "$maxkhz" in
+                "0")
+                        maxkhz=1674000
+                        maxkhz2="1.67ghz"
+                        ;;
+                "1")
+                        maxkhz=1674000
+                        maxkhz2="1.67ghz"
+                        ;;
+                "2")
+                        maxkhz=1620000
+                        maxkhz2="1.62ghz"
+                        ;;
+                "3")
+                        maxkhz=1566000
+                        maxkhz2="1.56ghz"
+                        ;;
+                "4")
+                        maxkhz=1512000
+                        maxkhz2="1.51ghz"
+                        ;;
+                "99")
+			exit
+                        ;;
+        esac
 clear
-echo "Min CPU Clock selection:"
-echo 
-frequencies=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' | head -n 4)
-# Load text file lines into a bash array.
-OLD_IFS=$IFS
-IFS=$'\n'
-let line_counter=0
-for line in $frequencies; do
-	let line_counter=$(($line_counter+1))
-	printf "${line_counter}) ${line}\n"
-done
-IFS=$OLD_IFS
-echo "Enter a selection [exit = 99]:"
-read input
-if [ "$input" == "99" ];then
-exit
-fi
-if [ "$input" -gt "$line_counter" ];then
-echo "Invalid selection: Aborting script"
-exit
-fi
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed '$d' | head -n 4 > /sdcard/temp1
-cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
-cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
-grep $input"=" /sdcard/temp1 > /sdcard/temp2
-sed -i -e 's/'$input'=//' /sdcard/temp2
-minkhz=$(cat /sdcard/temp2)
+echo "Min CPU Clock selection:" 
+echo
+echo "1) 486mhz"
+echo "2) 432mhz"
+echo "3) 384mhz"
+echo "4) 192mhz"
+echo "Choose number selection[99 = abort][0 = default:384mhz]:"
+read minkhz
+        case "$minkhz" in
+                "0")
+                        minkhz=384000
+                        minkhz2="384mhz"
+                        ;;
+                "1")
+                        minkhz=486000
+                        minkhz2="486mhz"
+                        ;;
+                "2")
+                        minkhz=432000
+                        minkhz2="432mhz"
+                        ;;
+                "3")
+                        minkhz=384000
+                        minkhz2="384mhz"
+                        ;;
+                "4")
+                        minkhz=192000
+                        minkhz2="192mhz"
+                        ;;
+                "99")
+			exit
+                        ;;
+        esac
 clear
 echo "Max Screen Off CPU Clock selection:" 
-echo 
-frequencies=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' | tail -n+5 | head -n 8)
-# Load text file lines into a bash array.
-OLD_IFS=$IFS
-IFS=$'\n'
-let line_counter=0
-for line in $frequencies; do
-	let line_counter=$(($line_counter+1))
-	printf "${line_counter}) ${line}\n"
-done
-IFS=$OLD_IFS
-echo "Enter a selection [exit = 99]:"
-read input
-if [ "$input" == "99" ];then
-exit
-fi
-if [ "$input" -gt "$line_counter" ];then
-echo "Invalid selection: Aborting script"
-exit
-fi
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed '$d' | tail -n+5 | head -n 8 > /sdcard/temp1
-cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
-cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
-grep $input"=" /sdcard/temp1 > /sdcard/temp2
-sed -i -e 's/'$input'=//' /sdcard/temp2
-maxscroff=$(cat /sdcard/temp2)
+echo
+echo "1) 702mhz"
+echo "2) 648mhz"
+echo "3) 594mhz"
+echo "4) 540mhz"
+echo "5) 486mhz"
+echo "Choose number selection[99 = abort][0 = default:486mhz:"
+read maxscroff
+        case "$maxscroff" in
+                "0")
+                        maxscroff=486000
+                        maxscroff2="486mhz"
+                        ;;
+                "1")
+                        maxscroff=702000
+                        maxscroff2="702mhz"
+                        ;;
+                "2")
+                        maxscroff=648000
+                        maxscroff2="648mhz"
+                        ;;
+                "3")
+                        maxscroff=594000
+                        maxscroff2="594mhz"
+                        ;;
+                "4")
+                        maxscroff=540000
+                        maxscroff2="540mhz"
+                        ;;
+                "5")
+                        maxscroff=486000
+                        maxscroff2="486mhz"
+                        ;;
+                "99")
+			exit
+                        ;;
+        esac
 clear
 echo "Governor selection:"
-echo
-governors=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors | sed -e 's/\s\s*/\n/g' | sed 's/ //g')
-# Load text file lines into a bash array & print as a menu.
-OLD_IFS=$IFS
-IFS=$'\n'
-let line_counter=0
-for line in $governors; do
-	let line_counter=$(($line_counter+1))
-	printf "${line_counter}) ${line}\n"
-done
-IFS=$OLD_IFS
-echo "Enter a selection [exit = 99]:"
-read input
-if [ "$input" == "99" ];then
-exit
-fi
-if [ "$input" -gt "$line_counter" ];then
-echo "Invalid selection: Aborting script"
-exit
-fi
-# Build the array as a readable file for parsing
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors > /sdcard/temp1
-cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
-cat /sdcard/temp2 | sed '$d' > /sdcard/temp1
-cat -n /sdcard/temp1 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp2
-grep $input"=" /sdcard/temp2 > /sdcard/temp1
-sed -i -e 's/'$input'=//' /sdcard/temp1
-# Chosen governor is now parsed let's make it usable
-gov=$(cat /sdcard/temp1)
+echo 
+echo "1) Intellidemand"
+echo "2) Lionheart"
+echo "3) Wheatley"
+echo "4) Lulzactive"
+echo "5) DanceDance"
+echo "6) Scary"
+echo "7) BadAss"
+echo "8) Lazy"
+echo "9) Lagfree"
+echo "Choose number selection[99 = abort][0 = default:Intellidemand]:"
+read gov
+	case "$gov" in
+                "0")
+                        gov=intellidemand
+                        gov2="Intellidemand"
+                        ;;
+                "1")
+                        gov=intellidemand
+                        gov2="Intellidemand"
+                        ;;
+                "2")
+                        gov=Lionheart
+                        gov2="LionHeart"
+                        ;;
+                "3")
+                        gov=wheatley
+                        gov2="Wheatley"
+                        ;;
+                "4")
+                        gov=lulzactive
+                        gov2="Lulzactive"
+                        ;;
+                "5")
+                        gov=dancedance
+                        gov2="DanceDance"
+                        ;;
+                "6")
+                        gov=scary
+                        gov2="Scary"
+                        ;;
+                "7")
+                        gov=badass
+                        gov2="BadAss"
+                        ;;
+                "8")
+                        gov=lazy
+                        gov2="Lazy"
+                        ;;
+                "9")
+                        gov=lagfree
+                        gov2="Lagfree"
+                        ;;
+                "99")
+			exit
+                        ;;
+	esac
 clear
 echo "IO Scheduler selection:"
 echo 
-schedulers=$(cat /sys/block/mmcblk0/queue/scheduler | sed 's/[[]//g' | sed 's/[]]//g' | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g')
-# Load text file lines into a bash array.
-OLD_IFS=$IFS
-IFS=$'\n'
-let line_counter=0
-for line in $schedulers; do
-	let line_counter=$(($line_counter+1))
-	printf "${line_counter}) ${line}\n"
-done
-IFS=$OLD_IFS
-echo "Enter a selection [exit = 99]:"
-read input
-if [ "$input" == "99" ];then
-exit
-fi
-if [ "$input" -gt "$line_counter" ];then
-echo "Invalid selection: Aborting script"
-exit
-fi
-cat /sys/block/mmcblk0/queue/scheduler | sed 's/[[]//g' | sed 's/[]]//g' | sed -e 's/\s\s*/\n/g' | sed '$d' | sed 's/ //g' > /sdcard/temp1
-cat /sdcard/temp1 | sed -e 's/\s\s*/\n/g' | sed 's/ //g' | sed -e 's/^//'| sed -e 's/^/=/' | sed 's/$//g' > /sdcard/temp2
-cat -n /sdcard/temp2 | sed 's/ //g' | sed 's/[[:space:]]//g' | sed 's/^//' > /sdcard/temp1
-grep $input"=" /sdcard/temp1 > /sdcard/temp2
-sed -i -e 's/'$input'=//' /sdcard/temp2
-scheduler=$(cat /sdcard/temp2)
+echo "1) SIO"
+echo "2) No-op"
+echo "3) Deadline"
+echo "4) Row"
+echo "Choose number selection[99 = abort][0 = default:SIO]:"
+read scheduler
+	case "$scheduler" in
+                "0")
+                        scheduler=sio
+                        ;;
+                "1")
+                        scheduler=sio
+                        ;;
+                "2")
+                        scheduler=noop
+                        ;;
+                "3")
+                        scheduler=deadline
+                        ;;
+                "4")
+                        scheduler=row
+                        ;;
+                "99")
+			exit
+                        ;;
+	esac
 clear
 echo "Sweep2Wake selection:"
 echo 
@@ -178,18 +230,9 @@ read s2w
 			exit
                         ;;
 	esac
-if [ "$s2w" -gt "2" ];then
-echo "Invalid selection: Aborting script"
-exit
-fi
 clear
-maxkhz2=$(echo $maxkhz | sed '$s/000/mhz/')
-minkhz2=$(echo $minkhz | sed '$s/000/mhz/')
-maxscroff2=$(echo $maxscroff | sed '$s/000/mhz/')
-rm /sdcard/temp1
-rm /sdcard/temp2
 echo "Last chance before we flash" 
-echo "Options chosen are $maxkhz2 $minkhz2 $maxscroff2 $gov $scheduler S2w $s2w2"
+echo "Options chosen are $maxkhz2 $minkhz2 $maxscroff2 $gov2 $scheduler S2w $s2w2"
 echo 
 echo "1) Yes; I am ready flash it right away"
 echo "2) No; let's just save it for later"
@@ -205,10 +248,12 @@ read confirm
 			fi
 			cd temp
 			dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
-			abootimg -x /sdcard/temp/tempboot.img
+			#-- The next line is dependent on the placement of abootimg
+			/sbin/abootimg -x /sdcard/temp/tempboot.img
 			sed -i '/cmdline = / d' bootimg.cfg
 			echo "cmdline = console=ttyHSL3 androidboot.hardware="$hardware" no_console_suspend=1 gov="$gov "maxkhz="$maxkhz "minkhz="$minkhz "scheduler="$scheduler "maxscroff="$maxscroff "s2w="$s2w"" >> bootimg.cfg
-			abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
+			#-- The next line is dependent on the placement of abootimg
+			/sbin/abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
 			dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot
 			rm bootimg.cfg
 			rm initrd.img
@@ -216,10 +261,10 @@ read confirm
 			if [ ! -d "/sdcard/lunar" ]; then
 			mkdir /sdcard/lunar
 			fi
-			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img ]; then
-			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img
+			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img ]; then
+			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img
 			echo "Flashed new boot and created at"
-			echo "/sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img"
+			echo "/sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img"
 			else
 			echo "Configuration already exists; aborting copy to /sdcard/lunar"
 			rm tempboot.img
@@ -233,20 +278,22 @@ read confirm
 			fi
 			cd temp
 			dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
-			abootimg -x /sdcard/temp/tempboot.img
+			#-- The next line is dependent on the placement of abootimg
+			/sbin/abootimg -x /sdcard/temp/tempboot.img
 			sed -i '/cmdline = / d' bootimg.cfg
 			echo "cmdline = console=ttyHSL3 androidboot.hardware="$hardware" no_console_suspend=1 gov="$gov "maxkhz="$maxkhz "minkhz="$minkhz "scheduler="$scheduler "maxscroff="$maxscroff "s2w="$s2w"" >> bootimg.cfg
-			abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
+			#-- The next line is dependent on the placement of abootimg
+			/sbin/abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
 			rm bootimg.cfg
 			rm initrd.img
 			rm zImage
 			if [ ! -d "/sdcard/lunar" ]; then
 			mkdir /sdcard/lunar
 			fi
-			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img ]; then
-			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img
+			if [ ! -e /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img ]; then
+			mv /sdcard/temp/tempboot.img /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img
 			echo "I just saved your boot LOL"
-			echo "It is saved here /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov"_"$scheduler"_s2w"$s2w2".img"
+			echo "It is saved here /sdcard/lunar/boot_"$maxkhz2"_"$minkhz2"_"$maxscroff2"_"$gov2"_"$scheduler"_s2w"$s2w2".img"
 			echo "Run 'sh /sbin/menu.sh' to flash"
 			else
 			echo "Configuration already exists; aborting copy to /sdcard/lunar"

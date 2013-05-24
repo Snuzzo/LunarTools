@@ -1,12 +1,27 @@
 #!/system/bin/sh
 #
-# 
+# dsixda was here - some original scripting was needed
 # Kludgy hack to help with kernels
 boot=$(grep -i "boot" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/' | sed 's/:[^:]*$//')
 recovery=$(grep -i "recovery" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/' | sed 's/:[^:]*$//')
 #Let's not rely on static values, we will get them from emmc hardware instead
-
 DATE=$(date +"%m%d%y")
+clear
+echo "Loading"
+sleep 1
+clear
+echo "Loading ."
+sleep 1
+clear
+echo "Loading . ."
+sleep 1
+clear
+echo "Loading . . ."
+sleep 1
+clear
+echo "NO SPACES or Special characters"
+echo "Enter name of current rom [Aa-Zz|0-9]:"
+read currentrom
 if [ ! -d "/sdcard/lunar" ]; then
 mkdir /sdcard/lunar
 fi
@@ -166,7 +181,7 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
-					dd if=$file_chosen of=/dev/block/$recovery 2> /dev/null
+					dd if=$file_chosen of=/dev/block/$recovery 2>/dev/null
 					echo "Done flashing....."
 					echo "GoodBye!"
 					exit
@@ -193,7 +208,7 @@ read menu
 		"3")
 			cd /sdcard/
 			grep_cmd1=`find -name FunkyBean* | grep -i \\.zip$`
-			grep_cmd1=`find -name FunkyICS* | grep -i \\.zip$`
+			grep_cmd2=`find -name FunkyICS* | grep -i \\.zip$`
 			cd /sdcard/lunar
 			grep_cmd3=`find zimage*`
 			grep_cmd=`echo $grep_cmd1 $grep_cmd2 $grep_cmd3`
@@ -247,12 +262,29 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
-					if [[ "$file_chosen" == "*.zip" ||  "$file_chosen" == "Funky*" ]; then
-					zimage=$(echo zimage$file_chosen | sed -e "s|.zip||")
-					unzip $file_chosen /lunarmenu/$zimage -d /sdcard/lunar/
-					file_chosen=$zimage
+					if [[ $file_chosen == *.zip ]]; then
+					file_chosen=$(echo $file_chosen | sed -e "s|./|/sdcard/|")  
+					zimage=$(echo $file_chosen | sed "s/.*Funky/zimageFunky/" | sed -e "s|.zip||")
+					md51=$(md5sum $file_chosen | cut -d ' ' -f 1)
+					md52=$(echo $file_chosen | sed -e "s|.zip|.md5|")
+					if [ -e $md52 ]; then
+					md52=$(cat $md52 | cut -d ' ' -f 1)
+					if [ "$md51" == "$md52" ]; then
+					echo "Zip MD5 Checksum matches"
+					else
+					echo "MD5 checksum mismatch: Aborting script"
+					exit 
 					fi
+					fi
+					unzip -e -o $file_chosen lunarmenu/$zimage -d /sdcard/lunar/ 2> /dev/null
+					unzip -e -o $file_chosen kernel/zImage -d /sdcard/lunar/ 2> /dev/null
+					if [ -e zImage ]; then
+					mv zImage $zimage
+					fi
+					sum1=$(sha1sum $zimage | cut -d ' ' -f 1)
+					else
 					sum1=$(sha1sum $file_chosen | cut -d ' ' -f 1)
+					fi
 					if [ ! -d "/sdcard/temp" ]; then
 					#-- Checking if temp exists if not we will create it
 					mkdir /sdcard/temp
@@ -262,30 +294,57 @@ read menu
 					sum2=$(sha1sum zImage | cut -d ' ' -f 1)
 					cp /sdcard/temp/tempboot.img /sdcard/lunar/boot_last_known_good.img
 					echo "Pulled a copy of your current boot.img to lunar/boot_last_known_good.img"
-					#-- The next line is dependent on the placement of abootimg
 					cd /sdcard/lunar
+					if [[ $file_chosen == *.zip ]]; then
+					size1=$(stat -c %s $zimage)
+					else
+					size1=$(stat -c %s $file_chosen)
+					fi
+					if [[ $file_chosen == *.zip ]]; then
+					abootimg -u /sdcard/temp/tempboot.img -k $zimage > /dev/null
+					else
 					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen > /dev/null
+					fi
+					size2=$(stat -c %s /sdcard/lunar/initrd.img)
+					size=$(($size1 + $size2 + 1048576))
+					printf -v hexsize "%x" "$size"
+					sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" /sdcard/lunar/bootimg.cfg
+					abootimg -u /sdcard/temp/tempboot.img -f /sdcard/lunar/bootimg.cfg > /dev/null
 					cd /sdcard/temp
-					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot 2> /dev/null
-					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img 2> /dev/null
+					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot 2>/dev/null
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img 2>/dev/null
 					abootimg -x /sdcard/temp/tempboot.img > /dev/null
+					sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" bootimg.cfg
+					abootimg -u /sdcard/temp/tempboot.img -f bootimg.cfg > /dev/null
 					sum3=$(sha1sum zImage | cut -d ' ' -f 1)
+					if [[ $file_chosen == *.zip ]]; then
+					echo "New zImage sha1sum is $sum1"
+					else
 					echo "$file_chosen sha1sum is $sum1"
+					fi
 					echo "Current zImage sha1sum is $sum2"
 					if [ "$sum3" == "$sum1" ]; then
 					echo "flashed ok"
-					currentboot=$(echo $file_chosen | sed -e "s|zimage|boot_currentrom_|")
+					if [[ $file_chosen == *.zip ]]; then
+					currentboot=$(echo $zimage | sed -e "s|zimage|boot_"$currentrom"_|")
+					else
+					currentboot=$(echo $file_chosen | sed -e "s|zimage|boot_"$currentrom"_|")
+					fi
 					echo "Copy of your updated boot.img is at lunar/$currentboot.img"
 					mv /sdcard/temp/tempboot.img /sdcard/lunar/$currentboot.img
+					rm /sdcard/lunar/boot_last_known_good.img
 					else
 					echo "flash unsuccessful"
 					echo "restoring boot_last_known_good.img"
-					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot 2> /dev/null
+					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot 2>/dev/null
 					fi
-					rm zImage
-					rm initrd.img
-					rm bootimg.cfg
-					rm -rf /data/dalvik-cache/*
+					rm -r /sdcard/temp
+					if [[ $file_chosen == *.zip ]]; then
+					rm /sdcard/lunar/zImage
+					rm /sdcard/lunar/initrd.img
+					rm /sdcard/lunar/bootimg.cfg
+					rm /data/dalvik-cache/*
+					fi
 					echo '--wipe_cache' >> /cache/recovery/command
 					echo "Rebooting to recovery.....to wipe Dalvik Cache & Cache"
 					echo "GoodBye!"
@@ -362,8 +421,8 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
-					unzip $file_chosen boot.img -d /sdcard/lunar/
-					dd if=/sdcard/lunar/boot.img of=/dev/block/$boot 2> /dev/null
+					unzip -e -o $file_chosen boot.img -d /sdcard/lunar/ 2>/dev/null
+					dd if=/sdcard/lunar/boot.img of=/dev/block/$boot 2>/dev/null
 					rm boot.img
 					echo "Rebooting to recovery....."
 					echo "... and finish flashing $file_chosen"
