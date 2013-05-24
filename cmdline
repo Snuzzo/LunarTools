@@ -186,6 +186,8 @@ clear
 maxkhz2=$(echo $maxkhz | sed '$s/000/mhz/')
 minkhz2=$(echo $minkhz | sed '$s/000/mhz/')
 maxscroff2=$(echo $maxscroff | sed '$s/000/mhz/')
+rm /sdcard/temp1
+rm /sdcard/temp2
 echo "Last chance before we flash" 
 echo "Options chosen are $maxkhz2 $minkhz2 $maxscroff2 $gov $scheduler S2w $s2w2"
 echo 
