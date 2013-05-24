@@ -19,13 +19,29 @@ clear
 echo "Loading . . ."
 sleep 1
 clear
-echo "NO SPACES or Special characters"
-echo "Enter name of current rom [Aa-Zz|0-9]:"
-read currentrom
 if [ ! -d "/sdcard/lunar" ]; then
 mkdir /sdcard/lunar
 fi
 cd /sdcard/lunar
+if [ ! -e "/sdcard/lunar/currentromconfig" ]; then
+echo "NO SPACES or Special characters"
+echo "Enter name of current rom [Aa-Zz|0-9]:"
+read currentrom
+echo 'currentrom='"$currentrom" >> currentromconfig
+else
+. /sdcard/lunar/currentromconfig
+echo "Current rom is set to $currentrom"
+echo "is this correct?[Yy = yes | Any other to modify]"
+read -n1 configconfirm
+echo
+fi
+if [[ "$configconfirm" == "Y" ||  "$configconfirm" == "y" ]]; then
+continue
+else
+echo "NO SPACES or Special characters"
+echo "Enter name of current rom [Aa-Zz|0-9]:"
+read currentrom
+fi
 echo
 echo "1) Flash a previously saved boot.img from cmdline script"
 echo "2) Flash a recovery.img"
@@ -306,7 +322,7 @@ read menu
 					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen > /dev/null
 					fi
 					size2=$(stat -c %s /sdcard/lunar/initrd.img)
-					size=$(($size1 + $size2 + 1048576))
+					size=$(($size1 + $size2 + 8096))
 					printf -v hexsize "%x" "$size"
 					sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" /sdcard/lunar/bootimg.cfg
 					abootimg -u /sdcard/temp/tempboot.img -f /sdcard/lunar/bootimg.cfg > /dev/null
@@ -339,15 +355,12 @@ read menu
 					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot 2>/dev/null
 					fi
 					rm -r /sdcard/temp
-					if [[ $file_chosen == *.zip ]]; then
 					rm /sdcard/lunar/zImage
 					rm /sdcard/lunar/initrd.img
 					rm /sdcard/lunar/bootimg.cfg
 					rm /data/dalvik-cache/*
-					fi
-					echo '--wipe_cache' >> /cache/recovery/command
-					echo "Rebooting to recovery.....to wipe Dalvik Cache & Cache"
-					echo "GoodBye!"
+				        echo "Rebooting to recovery....." 
+					echo "Manually flash matching zip to finish installation"
 					reboot recovery
 					;;
 				"2")
