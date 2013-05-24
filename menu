@@ -191,7 +191,12 @@ read menu
 			$confirm
 			;;
 		"3")
-			grep_cmd=`find zimage*`
+			cd /sdcard/
+			grep_cmd1=`find -name FunkyBean* | grep -i \\.zip$`
+			grep_cmd1=`find -name FunkyICS* | grep -i \\.zip$`
+			cd /sdcard/lunar
+			grep_cmd3=`find zimage*`
+			grep_cmd=`echo $grep_cmd1 $grep_cmd2 $grep_cmd3`
 			echo "zImages found:" 
 			echo
 			for filename in $grep_cmd 
@@ -242,6 +247,11 @@ read menu
 					sleep 1
 					echo "1"
 					sleep 1
+					if [[ "$file_chosen" == "*.zip" ||  "$file_chosen" == "Funky*" ]; then
+					zimage=$(echo zimage$file_chosen | sed -e "s|.zip||")
+					unzip $file_chosen /lunarmenu/$zimage -d /sdcard/lunar/
+					file_chosen=$zimage
+					fi
 					sum1=$(sha1sum $file_chosen | cut -d ' ' -f 1)
 					if [ ! -d "/sdcard/temp" ]; then
 					#-- Checking if temp exists if not we will create it
