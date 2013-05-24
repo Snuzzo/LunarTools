@@ -205,8 +205,13 @@ read confirm
 			fi
 			cd temp
 			dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
-		 	abootimg -x /sdcard/temp/tempboot.img
+			abootimg -x /sdcard/temp/tempboot.img
+			size1=$(stat -c %s zImage)
+			size2=$(stat -c %s initrd.img)
+			size=$(($size1 + $size2 + 1048576))
+			printf -v hexsize "%x" "$size"
 			sed -i '/cmdline = / d' bootimg.cfg
+			sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" bootimg.cfg
 			echo "cmdline = console=ttyHSL3 androidboot.hardware="$hardware" no_console_suspend=1 gov="$gov "maxkhz="$maxkhz "minkhz="$minkhz "scheduler="$scheduler "maxscroff="$maxscroff "s2w="$s2w"" >> bootimg.cfg
 			abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
 			dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot
@@ -234,7 +239,12 @@ read confirm
 			cd temp
 			dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img
 			abootimg -x /sdcard/temp/tempboot.img
+			size1=$(stat -c %s zImage)
+			size2=$(stat -c %s initrd.img)
+			size=$(($size1 + $size2 + 1048576))
+			printf -v hexsize "%x" "$size"
 			sed -i '/cmdline = / d' bootimg.cfg
+			sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" bootimg.cfg
 			echo "cmdline = console=ttyHSL3 androidboot.hardware="$hardware" no_console_suspend=1 gov="$gov "maxkhz="$maxkhz "minkhz="$minkhz "scheduler="$scheduler "maxscroff="$maxscroff "s2w="$s2w"" >> bootimg.cfg
 			abootimg -u /sdcard/temp/tempboot.img -f /sdcard/temp/bootimg.cfg
 			rm bootimg.cfg
