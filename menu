@@ -34,13 +34,13 @@ echo "Current rom is set to $currentrom"
 echo "is this correct?[Yy = yes | Any other to modify]"
 read -n1 configconfirm
 echo
-fi
 if [[ "$configconfirm" == "Y" ||  "$configconfirm" == "y" ]]; then
 continue
 else
 echo "NO SPACES or Special characters"
 echo "Enter name of current rom [Aa-Zz|0-9]:"
 read currentrom
+fi
 fi
 echo
 echo "1) Flash a previously saved boot.img from cmdline script"
