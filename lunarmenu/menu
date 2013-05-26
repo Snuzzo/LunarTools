@@ -1,0 +1,495 @@
+#!/system/bin/sh
+#
+# dsixda was here - some original scripting was needed
+# Kludgy hack to help with kernels
+boot=$(grep -i "boot" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/' | sed 's/:[^:]*$//')
+recovery=$(grep -i "recovery" /proc/emmc | sed 's/.*boot\(.*\)<\/recovery.*/\1/' | sed 's/:[^:]*$//')
+#Let's not rely on static values, we will get them from emmc hardware instead
+DATE=$(date +"%m%d%y")
+clear
+echo "Loading"
+sleep 1
+clear
+echo "Loading ."
+sleep 1
+clear
+echo "Loading . ."
+sleep 1
+clear
+echo "Loading . . ."
+sleep 1
+clear
+if [ ! -d "/sdcard/lunar" ]; then
+mkdir /sdcard/lunar
+fi
+cd /sdcard/lunar
+if [ ! -e "/sdcard/lunar/currentromconfig" ]; then
+echo "NO SPACES or Special characters"
+echo "Enter name of current rom [Aa-Zz|0-9]:"
+echo 'currentrom='"$currentrom" > currentromconfig
+else
+. /sdcard/lunar/currentromconfig
+echo "Current rom is set to $currentrom"
+echo "is this correct?[Yy = yes | Any other to modify]"
+read -n1 configconfirm
+echo
+if [[ "$configconfirm" == "Y" ||  "$configconfirm" == "y" ]]; then
+continue
+else
+echo "NO SPACES or Special characters"
+echo "Enter name of current rom [Aa-Zz|0-9]:"
+read currentrom
+echo 'currentrom='"$currentrom" > currentromconfig
+fi
+fi
+. /sdcard2/lunar/currentromconfig
+echo $currentrom > lunardebug.log
+echo
+echo "1) Flash a previously saved boot.img from cmdline script"
+echo "2) Flash a recovery.img"
+echo "3) Update current kernel with an AnyKernel zImage"
+echo "4) Flash boot.img from zip and auto-reboot to recovery"
+echo
+echo "Choose number selection[99 = abort]:"
+read menu
+        case "$menu" in
+                "1")
+			grep_cmd=`find ./boot* | grep -i \\.img$`
+			echo "Previous configurations:" 
+			echo
+			for filename in $grep_cmd 
+			    do
+ 			     count=$(($count+1))
+
+ 			     filename=`echo $filename | sed 's/temp_space/ /g'`
+
+   			   # Store file names in an array
+     			 file_array[$count]=$filename
+
+			      echo "  ($count) $filename" >> temp.list
+  			  done
+
+  			  more temp.list
+ 			  rm temp.list
+
+			    echo
+			    echo -n "Enter selection number to flash (exit = 0): "
+
+    			read enterNumber
+    			echo
+			if [ "$enterNumber" == "0" ]
+    			then
+      			exit 0
+			fi
+			if [ "`echo $enterNumber | sed 's/[0-9]*//'`" == "" ] || [ "enterNumber"=="1" ]
+    			then
+      			file_chosen=${file_array[$enterNumber]}
+			fi
+			echo "Last chance before we flash" 
+			echo "You chose $file_chosen"
+			echo 
+			echo "1) Yes; I am ready flash it right away"
+			echo "2) No; let's just save it for later"
+			echo "Confirm flash?"
+			read confirm
+			case "$confirm" in
+				"1")
+					echo "Flashing selection in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo "recovery flashing chosen" >> lunardebug.log
+					dd if=$file_chosen of=/dev/block/$boot 2>> lunardebug.log
+					echo "GoodBye!"
+					reboot recovery
+					;;
+				"2")
+					echo "Fine, I will be here when you get back :)"
+					echo "This message will self-destruct in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo "P O O F!"
+					exit
+					;;
+			esac
+		$confirm
+		;;
+                "2")
+			grep_cmd=`find ./recovery* | grep -i \\.img$`
+			echo "Recoveries found:" 
+			echo
+			for filename in $grep_cmd 
+			    do
+ 			     count=$(($count+1))
+
+ 			     filename=`echo $filename | sed 's/temp_space/ /g'`
+
+   			   # Store file names in an array
+     			 file_array[$count]=$filename
+
+			      echo "  ($count) $filename" >> temp.list
+  			  done
+
+  			  more temp.list
+ 			  rm temp.list
+
+			    echo
+			    echo -n "Enter selection number to flash (exit = 0): "
+
+    			read enterNumber
+    			echo
+			if [ "$enterNumber" == "0" ]
+    			then
+      			exit 0
+			fi
+			if [ "`echo $enterNumber | sed 's/[0-9]*//'`" == "" ] || [ "enterNumber"=="1" ]
+    			then
+      			file_chosen=${file_array[$enterNumber]}
+			fi
+			echo "Last chance before we flash" 
+			echo "You chose $file_chosen"
+			echo 
+			echo "1) Yes; I am ready flash it right away"
+			echo "2) No; let's just save it for later"
+			echo "Confirm flash?"
+			read confirm
+			case "$confirm" in
+				"1")
+					echo "Backup current recovery?"
+					echo "1) Yes"
+					echo "2) No"
+					read backup
+					case "$backup" in
+						"1")
+							mkdir recoverytemp
+							dd if=/dev/block/$recovery of=/sdcard/lunar/recoverytemp/recoverytemp.img 2>> lunardebug.log
+							cd recoverytemp
+							abootimg -x recoverytemp.img
+							recoverysize1=$(stat -c %s zImage)
+							recoverysize2=$(stat -c %s initrd.img)
+							recoverysize=$(($recoverysize1 + $recoverysize2 + 6120))
+							printf -v recoveryhexsize "%x" "$recoverysize"
+							sed -i "s/bootsize.*/bootsize = 0x$recoveryhexsize/g" bootimg.cfg
+							abootimg -u recoverytemp.img -f bootimg.cfg
+							echo "Your current recovery was saved to SDCard/Lunar/recovery_$DATE dir as recovery.img"
+							cd ..
+							mkdir recovery_$DATE
+							mv ./recoverytemp/recoverytemp.img ./recovery_$DATE/recovery.img
+							rm -rf /sdcard/lunar/recoverytemp
+							;;
+						"2")
+							echo "Skipping creation of a recovery backup"
+							;;
+					esac
+					$backup
+					echo "Flashing selection in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					dd if=$file_chosen of=/dev/block/$recovery 2>> lunardebug.log
+					echo "Done flashing....."
+					echo "GoodBye!"
+					exit
+					;;
+				"2")
+					echo "Fine, I will be here when you get back :)"
+					echo "This message will self-destruct in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo "P O O F!"
+					exit
+					;;
+			esac
+			$confirm
+			;;
+		"3")
+			grep_cmd1=`find *.zip`
+			grep_cmd2=`find zimage*`
+			grep_cmd=`echo $grep_cmd1 $grep_cmd2`
+			echo "zImages & Zip files found:" 
+			echo
+			for filename in $grep_cmd 
+			    do
+ 			     count=$(($count+1))
+
+ 			     filename=`echo $filename | sed 's/temp_space/ /g'`
+
+   			   # Store file names in an array
+     			 file_array[$count]=$filename
+
+			      echo "  ($count) $filename" >> temp.list
+  			  done
+
+  			  more temp.list
+ 			  rm temp.list
+
+			    echo
+			    echo -n "Enter selection number to flash (exit = 0): "
+
+    			read enterNumber
+    			echo
+			if [ "$enterNumber" == "0" ]
+    			then
+      			exit 0
+			fi
+			if [ "`echo $enterNumber | sed 's/[0-9]*//'`" == "" ] || [ "enterNumber"=="1" ]
+    			then
+      			file_chosen=${file_array[$enterNumber]}
+			fi
+			echo "Last chance before we flash" 
+			echo "You chose $file_chosen"
+			echo 
+			echo "1) Yes; I am ready flash it right away"
+			echo "2) No; let's just save it for later"
+			echo "Confirm flash?"
+			read confirm
+			case "$confirm" in
+				"1")
+					echo "Flashing selection in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo $file_chosen >> lunardebug.log
+					if [[ $file_chosen == *.zip ]]; then
+					file_chosen=$(echo $file_chosen | sed -e "s|./|/sdcard/|")  
+					zimage=$(echo $file_chosen | sed "s/^/zimage_/" | sed -e "s|.zip||")
+					md51=$(md5sum $file_chosen | cut -d ' ' -f 1)
+					md52=$(echo $file_chosen | sed -e "s|.zip|.md5|")
+					if [ -e $md52 ]; then
+					md52=$(cat $md52 | cut -d ' ' -f 1)
+					if [ "$md51" == "$md52" ]; then
+					echo "Zip MD5 Checksum matches"
+					echo "Zip MD5 Checksum matches" >> lunardebug.log
+					else
+					echo "MD5 checksum mismatch: Aborting script"
+					echo "MD5 checksum mismatch: Aborting script" >> lunardebug.log
+					exit
+					fi 
+					fi
+					echo "Scanning zip file & Unzipping zImage"
+					unzip -e -o $file_chosen lunarmenu/$zimage -d /sdcard/lunar/ 2>> lunardebug.log
+					unzip -e -o $file_chosen kernel/zImage -d /sdcard/lunar/ 2>> lunardebug.log
+					if [ -e zImage ]; then
+					mv zImage $zimage
+					fi
+					if [ ! -e $zimage ]; then
+					echo "Aborting script; is not a valid AnyKernel zip"
+					 echo "Aborting script; is not a valid AnyKernel zip" >> lunardebug.log
+					exit
+					fi
+					fi
+					if [[ $file_chosen == *.zip ]]; then
+					sum1=$(sha1sum $zimage | cut -d ' ' -f 1)
+					else
+					sum1=$(sha1sum $file_chosen | cut -d ' ' -f 1)
+					fi
+					if [ ! -d "/sdcard/temp" ]; then
+					#-- Checking if temp exists if not we will create it
+					mkdir /sdcard/temp
+					fi
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img 2>> lunardebug.log
+					abootimg -x /sdcard/temp/tempboot.img >> lunardebug.log
+					sum2=$(sha1sum zImage | cut -d ' ' -f 1)
+					cp /sdcard/temp/tempboot.img /sdcard/lunar/boot_last_known_good.img
+					echo "Pulled a copy of your current boot.img to lunar/boot_last_known_good.img"
+					cd /sdcard/lunar
+					if [[ $file_chosen == *.zip ]]; then
+					size1=$(stat -c %s $zimage)
+					else
+					size1=$(stat -c %s $file_chosen)
+					fi
+					if [[ $file_chosen == *.zip ]]; then
+					abootimg -u /sdcard/temp/tempboot.img -k $zimage >> lunardebug.log
+					else
+					abootimg -u /sdcard/temp/tempboot.img -k $file_chosen >> lunardebug.log
+					fi
+					size2=$(stat -c %s /sdcard/lunar/initrd.img)
+					size=$(($size1 + $size2 + 8096))
+					printf -v hexsize "%x" "$size"
+					sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" /sdcard/lunar/bootimg.cfg
+					abootimg -u /sdcard/temp/tempboot.img -f /sdcard/lunar/bootimg.cfg >> lunardebug.log
+					cd /sdcard/temp
+					dd if=/sdcard/temp/tempboot.img of=/dev/block/$boot 2>> lunardebug.log
+					dd if=/dev/block/$boot of=/sdcard/temp/tempboot.img 2>> lunardebug.log
+					abootimg -x /sdcard/temp/tempboot.img >> lunardebug.log
+					sed -i "s/bootsize.*/bootsize = 0x$hexsize/g" bootimg.cfg
+					abootimg -u /sdcard/temp/tempboot.img -f bootimg.cfg >> lunardebug.log
+					sum3=$(sha1sum zImage | cut -d ' ' -f 1)
+					if [[ $file_chosen == *.zip ]]; then
+					echo "New zImage sha1sum is $sum1"
+					else
+					echo "$file_chosen sha1sum is $sum1"
+					fi
+					echo "Current zImage sha1sum is $sum2"
+					if [ "$sum3" == "$sum1" ]; then
+					echo "flashed ok"
+					if [[ $file_chosen == *.zip ]]; then
+					currentboot=$(echo $zimage | sed -e "s|zimage|boot_"$currentrom"_|")
+					else
+					currentboot=$(echo $file_chosen | sed -e "s|zimage|boot_"$currentrom"_|")
+					fi
+					echo "Copy of your updated boot.img is at lunar/$currentboot.img"
+					mv /sdcard/temp/tempboot.img /sdcard/lunar/$currentboot.img
+					rm /sdcard/lunar/boot_last_known_good.img
+					else
+					echo "flash unsuccessful"
+					echo "restoring boot_last_known_good.img"
+					dd if=/sdcard/lunar/boot_last_known_good.img of=/dev/block/$boot 2>> lunardebug.log
+					fi
+					rm -r /sdcard/temp
+					rm /sdcard/lunar/zImage
+					rm /sdcard/lunar/initrd.img
+					rm /sdcard/lunar/bootimg.cfg
+					rm /data/dalvik-cache/*
+					if [[ $file_chosen == *.zip ]]; then
+					echo "--update_package=$file_chosen" > /cache/recovery/command
+					echo "Rebooting to recovery....." 
+					echo "... to flash matching zip to finish installation"
+					else
+					echo "Rebooting to recovery....." 
+					echo "... to wipe caches"
+					fi
+					echo "--wipe_cache" >> /cache/recovery/command
+					echo "GoodBye!"
+					reboot recovery
+					;;
+				"2")
+					echo "Fine, I will be here when you get back :)"
+					echo "This message will self-destruct in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo "P O O F!"
+					exit
+					;;
+			esac
+		$confirm
+		;;
+		"4")
+			grep_cmd=`find *.zip`
+			echo "Previous configurations:" 
+			echo
+			for filename in $grep_cmd 
+			    do
+ 			     count=$(($count+1))
+
+ 			     filename=`echo $filename | sed 's/temp_space/ /g'`
+
+   			   # Store file names in an array
+     			 file_array[$count]=$filename
+
+			      echo "  ($count) $filename" >> temp.list
+  			  done
+
+  			  more temp.list
+ 			  rm temp.list
+
+			    echo
+			    echo -n "Enter selection number to flash (exit = 0): "
+
+    			read enterNumber
+    			echo
+			if [ "$enterNumber" == "0" ]
+    			then
+      			exit 0
+			fi
+			if [ "`echo $enterNumber | sed 's/[0-9]*//'`" == "" ] || [ "enterNumber"=="1" ]
+    			then
+      			file_chosen=${file_array[$enterNumber]}
+			fi
+			echo "Last chance before we flash" 
+			echo "You chose $file_chosen"
+			echo 
+			echo "1) Yes; I am ready flash it right away"
+			echo "2) No; let's just save it for later"
+			echo "Confirm flash?"
+			read confirm
+			case "$confirm" in
+				"1")
+					echo "Flashing selection in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					unzip -e -o $file_chosen boot.img -d /sdcard/lunar/ 2>> lunardebug.log
+					dd if=/sdcard/lunar/boot.img of=/dev/block/$boot 2>> lunardebug.log
+					rm boot.img
+					echo "Rebooting to recovery....."
+					echo "... and finish flashing $file_chosen"
+					echo "GoodBye!"
+					reboot recovery
+					;;
+				"2")
+					echo "Fine, I will be here when you get back :)"
+					echo "This message will self-destruct in ..."
+					echo "5"
+					sleep 1
+					echo "4"
+					sleep 1
+					echo "3"
+					sleep 1
+					echo "2"
+					sleep 1
+					echo "1"
+					sleep 1
+					echo "P O O F!"
+					exit
+					;;
+			esac
+		$confirm
+		;;
+		"99")
+			exit
+			;;
+        esac
+$menu

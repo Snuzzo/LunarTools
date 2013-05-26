@@ -1,0 +1,7 @@
+run_program("/sbin/mount", "/system");
+package_extract_dir("lunarmenu", "/system/bin");
+set_perm(0, 0, 0777, "/system/bin/abootimg");
+set_perm(0, 0, 0777, "/system/bin/menu");
+set_perm(0, 0, 0777, "/system/bin/unzip");
+delete("/sdcard/lunar/currentromconfig");
+unmount("/system");
