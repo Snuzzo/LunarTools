@@ -175,10 +175,21 @@ read menu
 					read backup
 					case "$backup" in
 						"1")
-							echo "Input name of recovery backup [Aa-Zz|0-9]:"
-							read recoverybackup
-							dd if=/dev/block/$recovery of=/sdcard/lunar/recovery_$recoverybackup_$DATE.img 2>> lunardebug.log
-							echo "Your current recovery was saved to SDCard/Lunar dir as recovery_$recoverybackup_$DATE.img"
+							mkdir recoverytemp
+							dd if=/dev/block/$recovery of=/sdcard/lunar/recoverytemp/recoverytemp.img 2>> lunardebug.log
+							cd recoverytemp
+							abootimg -x recoverytemp.img
+							recoverysize1=$(stat -c %s zImage)
+							recoverysize2=$(stat -c %s initrd.img)
+							recoverysize=$(($recoverysize1 + $recoverysize2 + 6120))
+							printf -v recoveryhexsize "%x" "$recoverysize"
+							sed -i "s/bootsize.*/bootsize = 0x$recoveryhexsize/g" bootimg.cfg
+							abootimg -u recoverytemp.img -f bootimg.cfg
+							echo "Your current recovery was saved to SDCard/Lunar/recovery_$DATE dir as recovery.img"
+							cd ..
+							mkdir recovery_$DATE
+							mv ./recoverytemp/recoverytemp.img ./recovery_$DATE/recovery.img
+							rm -rf /sdcard/lunar/recoverytemp
 							;;
 						"2")
 							echo "Skipping creation of a recovery backup"
