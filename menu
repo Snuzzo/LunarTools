@@ -26,8 +26,7 @@ cd /sdcard/lunar
 if [ ! -e "/sdcard/lunar/currentromconfig" ]; then
 echo "NO SPACES or Special characters"
 echo "Enter name of current rom [Aa-Zz|0-9]:"
-read currentrom
-echo 'currentrom='"$currentrom" >> currentromconfig
+echo 'currentrom='"$currentrom" > currentromconfig
 else
 . /sdcard/lunar/currentromconfig
 echo "Current rom is set to $currentrom"
@@ -40,8 +39,10 @@ else
 echo "NO SPACES or Special characters"
 echo "Enter name of current rom [Aa-Zz|0-9]:"
 read currentrom
+echo 'currentrom='"$currentrom" > currentromconfig
 fi
 fi
+. /sdcard2/lunar/currentromconfig
 echo $currentrom > lunardebug.log
 echo
 echo "1) Flash a previously saved boot.img from cmdline script"
